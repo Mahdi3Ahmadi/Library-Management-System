@@ -1,0 +1,80 @@
+{% extends 'library/base.html' %}
+{% block title %}{{ book.title }} | نظرات{% endblock %}
+
+{% block content %}
+<div class="row mt-4">
+    <div class="col-md-5 mb-4">
+        <div class="card shadow-sm border-primary">
+            {% if book.cover_image %}
+            <img src="{{ book.cover_image.url }}" class="card-img-top" alt="{{ book.title }}">
+            {% endif %}
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">{{ book.title }}</h4>
+            </div>
+            <div class="card-body">
+                {% if book.description %}
+                <div class="alert alert-light border border-info mb-3">
+                    <p class="mb-0 text-justify text-muted" style="line-height: 1.8;">{{ book.description|linebreaks }}
+                    </p>
+                </div>
+                {% endif %}
+                <p><strong>نویسنده:</strong> {{ book.author }}</p>
+                <p><strong>ژانر:</strong> {{ book.genre }}</p>
+                <p><strong>سال انتشار:</strong> {{ book.publish_date }}</p>
+                <p><strong>موجودی:</strong> {{ book.available_copies }} از {{ book.total_copies }}</p>
+
+                {% if user.is_authenticated and book.available_copies > 0 %}
+                <a href="{% url 'borrow_book' book.id %}" class="btn btn-success w-100 mt-3">درخواست امانت</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-7">
+        <h4 class="mb-3">نظرات کاربران</h4>
+
+        {% if user.is_authenticated %}
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">امتیاز شما (از ۱ تا ۵):</label>
+                        <select name="rating" class="form-select" required>
+                            <option value="5">⭐⭐⭐⭐⭐ (عالی)</option>
+                            <option value="4">⭐⭐⭐⭐ (خوب)</option>
+                            <option value="3">⭐⭐⭐ (متوسط)</option>
+                            <option value="2">⭐⭐ (ضعیف)</option>
+                            <option value="1">⭐ (خیلی بد)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">متن نظر:</label>
+                        <textarea name="comment" class="form-control" rows="3" required
+                            placeholder="نظر خود را درباره این کتاب بنویسید..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">ثبت نظر</button>
+                </form>
+            </div>
+        </div>
+        {% else %}
+        <div class="alert alert-warning">برای ثبت نظر باید <a href="{% url 'login' %}">وارد سایت</a> شوید.</div>
+        {% endif %}
+
+        {% for review in reviews %}
+        <div class="card mb-3 shadow-sm border-light">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <strong class="text-primary">{{ review.user.username }}</strong>
+                    <span class="badge bg-warning text-dark">{{ review.rating }} ستاره</span>
+                </div>
+                <p class="mt-2 mb-0">{{ review.comment }}</p>
+                <small class="text-muted">{{ review.created_at|date:"Y-m-d H:i" }}</small>
+            </div>
+        </div>
+        {% empty %}
+        <p class="text-muted">هنوز نظری برای این کتاب ثبت نشده است. اولین نفر باشید!</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

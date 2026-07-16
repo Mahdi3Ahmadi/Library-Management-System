@@ -1,0 +1,247 @@
+{% extends 'library/base.html' %}
+
+{% block title %}داشبورد مدیریت | سامانه کتابخانه{% endblock %}
+
+{% block content %}
+<div class="row mt-4">
+    <div class="col-12 mb-4">
+        <h3 class="fw-bold border-bottom pb-2"> داشبورد آماری مدیر کتابخانه</h3>
+    </div>
+
+    
+    <div class="col-md-3 mb-4">
+        <div class="card text-white bg-primary shadow-sm h-100">
+            <div class="card-body text-center">
+                <h5 class="card-title">کل کتاب‌ها</h5>
+                <h2 class="display-5 fw-bold">{{ total_books }}</h2>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 mb-4">
+        <div class="card text-white bg-success shadow-sm h-100">
+            <div class="card-body text-center">
+                <h5 class="card-title">کاربران ثبت‌نامی</h5>
+                <h2 class="display-5 fw-bold">{{ total_users }}</h2>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 mb-4">
+        <div class="card text-dark bg-warning shadow-sm h-100">
+            <div class="card-body text-center">
+                <h5 class="card-title">امانت‌های فعال</h5>
+                <h2 class="display-5 fw-bold">{{ active_borrows }}</h2>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 mb-4">
+        <div class="card text-white bg-danger shadow-sm h-100">
+            <div class="card-body text-center">
+                <h5 class="card-title">مطالبات (جریمه‌ها)</h5>
+                <h2 class="display-6 fw-bold mt-2">{{ unpaid_penalties }} <small class="fs-6">تومان</small></h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="card shadow-sm mt-2 border-dark mb-4">
+    <div class="card-header bg-dark text-white fw-bold">
+        کتاب‌های امانت داده شده
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive" style="max-height: 350px; overflow-y: auto;">
+            <table class="table table-striped mb-0">
+                <thead class="table-dark" style="position: sticky; top: 0; z-index: 2;">
+                    <tr>
+                        <th>کاربر</th>
+                        <th>نام کتاب</th>
+                        <th>تاریخ امانت</th>
+                        <th>وضعیت</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for borrow in recent_borrows %}
+                    <tr>
+                        <td>{{ borrow.user.username }}</td>
+                        <td class="fw-bold">{{ borrow.book.title }}</td>
+                        <td>{{ borrow.borrow_date }}</td>
+                        <td>
+                            {% if borrow.is_returned %}
+                            <span class="badge bg-success">بازگردانده شده</span>
+                            {% else %}
+                            <span class="badge bg-warning text-dark">در دست امانت</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<div class="row mt-4">
+    <div class="col-md-6 mb-4">
+        <div class="card shadow-sm border-info h-100">
+            <div class="card-header bg-info text-dark fw-bold">
+                 محبوب‌ترین کتاب‌ها (بر اساس دفعات امانت)
+            </div>
+            <div style="max-height: 300px; overflow-y: auto;">
+                <ul class="list-group list-group-flush">
+                    {% for p_book in popular_books %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        {{ p_book.title }}
+                        <span class="badge bg-primary rounded-pill">{{ p_book.borrow_count }} بار امانت</span>
+                    </li>
+                    {% empty %}
+                    <li class="list-group-item text-muted text-center">داده‌ای موجود نیست</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 mb-4">
+        <div class="card shadow-sm border-success h-100">
+            <div class="card-header bg-success text-white fw-bold">
+                 فعال‌ترین اعضا(بر اساس تعداد امانت)
+            </div>
+            <div style="max-height: 300px; overflow-y: auto;">
+                <ul class="list-group list-group-flush">
+                    {% for t_user in top_users %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        {{ t_user.username }}
+                        <span class="badge bg-success rounded-pill">{{ t_user.borrow_count }} بار امانت</span>
+                    </li>
+                    {% empty %}
+                    <li class="list-group-item text-muted text-center">داده‌ای موجود نیست</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm mt-2 border-danger mb-4">
+    <div class="card-header bg-danger text-white fw-bold">
+         هشدارهای تأخیر در بازگشت
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>کاربر</th>
+                    <th>نام کتاب</th>
+                    <th>مهلت بازگشت</th>
+                    <th>وضعیت</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for delay in delayed_borrows %}
+                <tr>
+                    <td class="text-danger fw-bold">{{ delay.user.username }}</td>
+                    <td>{{ delay.book.title }}</td>
+                    <td>{{ delay.due_date|date:"Y-m-d" }}</td>
+                    <td><span class="badge bg-danger">تأخیر دارد</span></td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="text-center py-3 text-success">🎉 هیچ کاربر دارای تأخیری وجود ندارد!</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card shadow-sm mt-2 border-secondary mb-5">
+    <div class="card-header bg-secondary text-white fw-bold">
+         گزارش موجودی و وضعیت کتاب‌ها (انبارداری هوشمند)
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+            <table class="table table-striped table-hover mb-0">
+                <thead class="table-dark" style="position: sticky; top: 0; z-index: 1;">
+                    <tr>
+                        <th>نام کتاب</th>
+                        <th>کل نسخه‌ها</th>
+                        <th>موجود در قفسه</th>
+                        <th>امانت داده شده</th>
+                        <th>تعداد در صف رزرو</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for book in all_books_inventory %}
+                    <tr>
+                        <td class="fw-bold">{{ book.title }}</td>
+                        <td>{{ book.total_copies }}</td>
+                        <td class="text-success fw-bold">{{ book.available_copies }}</td>
+
+                        <td class="text-warning fw-bold">{{ book.borrowed_count }}</td>
+
+                        <td>
+                            {% if book.active_reservations > 0 %}
+                            <span class="badge bg-danger">{{ book.active_reservations }} نفر در صف</span>
+                            {% else %}
+                            <span class="text-muted">۰</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm mt-4 border-info mb-4">
+    <div class="card-header bg-info text-dark fw-bold">
+         آخرین نظرات و بازخوردهای کاربران
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive" style="max-height: 350px; overflow-y: auto;">
+            <table class="table table-hover mb-0">
+                <thead class="table-light" style="position: sticky; top: 0; z-index: 2;">
+                    <tr>
+                        <th>کاربر</th>
+                        <th>نام کتاب</th>
+                        <th>امتیاز</th>
+                        <th>متن نظر</th>
+                        <th>تاریخ ثبت</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for review in recent_reviews %}
+                    <tr>
+                        <td class="fw-bold text-primary">{{ review.user.username }}</td>
+                        <td class="text-dark">{{ review.book.title }}</td>
+                        <td>
+                            
+                            <span class="badge bg-warning text-dark">
+                                 {{ review.rating }} از ۵
+                            </span>
+                        </td>
+                        
+                        <td class="text-muted"
+                            style="max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
+                            title="{{ review.comment }}">
+                            {{ review.comment }}
+                        </td>
+                        <td class="small text-secondary" dir="ltr">{{ review.created_at|date:"Y-m-d H:i" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center py-4 text-muted">
+                             هنوز هیچ نظری در سامانه ثبت نشده است.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
